@@ -1,0 +1,29 @@
+name: nginx-deployment
+serviceType: deployment
+containers:
+  - name: nginx
+    dev:
+      gitUrl: ""
+      image: localhost:5000/dlv:1.18
+      shell: ""
+      workDir: ""
+      storageClass: ""
+      resources:
+        limits:
+          memory: 512Mi
+          cpu: "1"
+        requests:
+          memory: 256Mi
+          cpu: "0.5"
+      persistentVolumeDirs: []
+      command:
+        run: []
+        debug:
+          - ./debug.sh
+      debug:
+        remoteDebugPort: 8181
+        language: go
+      hotReload: true
+      sync: null
+      env: []
+      portForward: []
