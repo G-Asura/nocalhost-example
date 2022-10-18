@@ -5,8 +5,9 @@ import (
 	"flag"
 	"fmt"
 
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -23,6 +24,7 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+
 	flag.StringVar(&mysqlSvc, "mysqlSvc", "mysql", "mysql svc name.")
 	flag.StringVar(&mysqlNS, "mysqlNS", "default", "mysql namespace name.")
 	flag.StringVar(&rootPW, "rootPW", "root", "root password.")
@@ -37,18 +39,15 @@ func main() {
 		panic(err.Error())
 	}
 
-	conn, err := getConn(svc.Spec.ClusterIP, svc.Spec.Ports[0].Port)
+	db, err := sql.Open("mysql", fmt.Sprintf("root:%s@tcp(%s:%d)/", rootPW, svc.Spec.ClusterIP, svc.Spec.Ports[0].Port))
 	if err != nil {
 		panic(err.Error())
 	}
-	// create database
-	err = conn.Exec("CREATE DATABASE IF NOT EXISTS test").Error
-	if err != nil {
-		panic(err.Error())
-	}
-}
+	defer db.Close()
 
-func getConn(svc string, port int32) (*gorm.DB, error) {
-	conn, err := gorm.Open(mysql.Open(fmt.Sprintf("%s:%s@tcp(%s:%d)/", "root", rootPW, svc, port)))
-	return conn, err
+	// create database
+	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS test")
+	if err != nil {
+		panic(err.Error())
+	}
 }
